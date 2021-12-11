@@ -1,6 +1,4 @@
-# AOC 2021
-
-### Days Completed
+## Days Completed
 - [x] Day 01
 - [ ] Day 02
 - [ ] Day 03
