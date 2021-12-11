@@ -1,22 +1,7 @@
 const std = @import("std");
+const input = @embedFile("input.txt");
 
-pub fn part_one() !void {
-    const input = @embedFile("part_one.txt");
-    var it = std.mem.tokenize(u8, input, "\n");
-    var last: usize = std.math.maxInt(usize);
-    var increments: usize = 0;
-
-    while (it.next()) |line| {
-        const n = try std.fmt.parseInt(usize, line, 10);
-        if (n > last) increments += 1;
-        last = n;
-    }
-
-    std.debug.print("part one result: {}\n", .{increments});
-}
-
-pub fn part_two() !void {
-    const input = @embedFile("part_one.txt");
+pub fn main() !void {
     var it = std.mem.tokenize(u8, input, "\n");
 
     // initial window
@@ -41,10 +26,5 @@ pub fn part_two() !void {
 
         prev = curr;
     }
-    std.debug.print("part two result: {}\n", .{increments});
-}
-
-pub fn main() !void {
-    try part_one();
-    try part_two();
+    std.debug.print("result: {}\n", .{increments});
 }
