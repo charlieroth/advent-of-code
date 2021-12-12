@@ -16,11 +16,11 @@ pub fn main() !void {
     var depth: usize = 0;
     var aim: usize = 0;
 
-    while (it.next()) |direction| {
+    while (it.next()) |command| {
         // parse next token to get numeric value
         const val = try std.fmt.parseInt(usize, it.next().?, 10);
 
-        switch(std.meta.stringToEnum(Command, direction).?) {
+        switch(std.meta.stringToEnum(Command, command).?) {
             .forward => { horz += val; depth += aim * val; },
             .up => { aim -= val; },
             .down => { aim += val; },
