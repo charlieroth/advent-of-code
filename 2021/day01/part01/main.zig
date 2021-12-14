@@ -1,5 +1,6 @@
 const std = @import("std");
 const input = @embedFile("input.txt");
+// const input = @embedFile("example.txt");
 
 pub fn main() !void {
     var it = std.mem.tokenize(u8, input, "\n");

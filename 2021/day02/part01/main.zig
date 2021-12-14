@@ -1,6 +1,6 @@
 const std = @import("std");
-// const input = @embedFile("example.txt");
-const input = @embedFile("input.txt");
+const input = @embedFile("example.txt");
+// const input = @embedFile("input.txt");
 
 const Command = enum {
     forward,
@@ -20,9 +20,9 @@ pub fn main() !void {
         const val = try std.fmt.parseInt(usize, it.next().?, 10);
 
         switch(std.meta.stringToEnum(Command, command).?) {
-            .forward => { horz += value; },
-            .up => { depth -= value; },
-            .down => { depth += value; },
+            .forward => { horz += val; },
+            .up => { depth -= val; },
+            .down => { depth += val; },
         }
     }
 
