@@ -1,1 +1,79 @@
 # Advent of Code: Day 01
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.7.0"}
+])
+```
+
+## Helpers
+
+```elixir
+defmodule Helpers do
+  def create_file_input() do
+    Kino.Input.text("Input File")
+  end
+
+  def read_file_contents(input) do
+    filename = Kino.Input.read(input)
+    file_path = "/Users/charlie/github.com/charlieroth/advent-of-code/2022/#{filename}"
+
+    case File.read(file_path) do
+      {:ok, contents} -> contents
+      {:error, _} -> raise("Failed to read file contents")
+    end
+  end
+end
+```
+
+## Day 01: Calorie Counting
+
+```elixir
+example_input = ~S"""
+1000
+2000
+3000
+
+4000
+
+5000
+6000
+
+7000
+8000
+9000
+
+10000
+"""
+```
+
+```elixir
+file_input = Helpers.create_file_input()
+```
+
+#### Part 01
+
+```elixir
+Helpers.read_file_contents(file_input)
+|> String.split("\n\n")
+|> Enum.map(fn x -> String.split(x, "\n") end)
+|> Enum.map(&Enum.filter(&1, fn it -> it !== "" end))
+|> Enum.map(&Enum.map(&1, fn it -> String.to_integer(it) end))
+|> Enum.map(&Enum.sum/1)
+|> Enum.sort(&(&1 >= &2))
+|> hd()
+```
+
+#### Part 02
+
+```elixir
+Helpers.read_file_contents(file_input)
+|> String.split("\n\n")
+|> Enum.map(&String.split(&1, "\n"))
+|> Enum.map(&Enum.filter(&1, fn it -> it !== "" end))
+|> Enum.map(&Enum.map(&1, fn it -> String.to_integer(it) end))
+|> Enum.map(&Enum.sum/1)
+|> Enum.sort(&(&1 >= &2))
+|> Enum.slice(0..2)
+|> Enum.sum()
+```
