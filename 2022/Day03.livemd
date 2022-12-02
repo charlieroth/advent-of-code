@@ -1,1 +1,22 @@
 # Advent of Code: Day 03
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.7.0"}
+])
+```
+
+## Day 03: ???
+
+```elixir
+defmodule Helpers do
+  def read_file_contents(filename) do
+    file_path = "/Users/charlie/github.com/charlieroth/advent-of-code/2022/#{filename}"
+
+    case File.read(file_path) do
+      {:ok, contents} -> contents
+      {:error, _} -> raise("Failed to read file contents")
+    end
+  end
+end
+```
