@@ -1,0 +1,14 @@
+# Index
+
+## Advent Of Code 2022
+
+| [Day 01](Day01.livemd) | [Day 10](Day10.livemd) | [Day 19](Day19.livemd) |
+| ---------------------- | ---------------------- | ---------------------- |
+| [Day 02](Day02.livemd) | [Day 11](Day11.livemd) | [Day 20](Day20.livemd) |
+| [Day 03](Day03.livemd) | [Day 12](Day12.livemd) | [Day 21](Day21.livemd) |
+| [Day 04](Day04.livemd) | [Day 13](Day13.livemd) | [Day 22](Day22.livemd) |
+| [Day 05](Day05.livemd) | [Day 14](Day14.livemd) | [Day 23](Day23.livemd) |
+| [Day 06](Day06.livemd) | [Day 15](Day15.livemd) | [Day 24](Day24.livemd) |
+| [Day 07](Day07.livemd) | [Day 16](Day16.livemd) | [Day 25](Day25.livemd) |
+| [Day 08](Day08.livemd) | [Day 17](Day17.livemd) |                        |
+| [Day 09](Day09.livemd) | [Day 18](Day18.livemd) |                        |
