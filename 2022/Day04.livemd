@@ -1,1 +1,123 @@
 # Advent of Code: Day 04
+
+## Helpers
+
+```elixir
+defmodule Helpers do
+  @spec read_file_contents(String.t()) :: {:ok, binary()}
+  def read_file_contents(filename) do
+    file_path = "/Users/charlie/github.com/charlieroth/advent-of-code/2022/#{filename}"
+
+    case File.read(file_path) do
+      {:ok, contents} -> contents
+      {:error, _} -> raise("Failed to read file contents")
+    end
+  end
+
+  @spec in_range?(list(integer()), list(integer())) :: boolean()
+  def in_range?(a, b) do
+    [a_start | a_rest] = a
+    [a_finish | _] = a_rest
+    [b_start | b_rest] = b
+    [b_finish | _] = b_rest
+    a_start >= b_start and a_finish <= b_finish
+  end
+
+  @spec overlap?(list(integer()), list(integer())) :: boolean()
+  def overlap?(a, b) do
+    [_ | a_rest] = a
+    [a_finish | _] = a_rest
+    [b_start | _] = b
+    !(a_finish < b_start or b_start > a_finish)
+  end
+end
+```
+
+## Part 01
+
+Elves have been assigned the job of cleaning up sections of the camp. Every section has a unique ID number, and each Elf is assigned a range of section IDs
+
+The Elves pair up and make a big list of the section assignments for each pair
+
+Example
+
+```
+2-4,6-8
+2-3,4-5
+5-7,7-9
+2-8,3-7
+6-6,4-6
+2-6,4-8
+```
+
+For the first few pairs, this list means:
+
+* Within the first pair of Elves, the first Elf was assigned sections `2-4` (sections `2`, `3`, and `4`), while the second Elf was assigned sections `6-8` (sections `6`, `7`, `8`).
+* The Elves in the second pair were each assigned two sections.
+* The Elves in the third pair were each assigned three sections: one got sections `5`, `6`, and `7`, while the other also got `7`, plus `8` and `9`.
+
+Some of the pairs have noticed that one of their assignments fully contains the other. For example, `2-8` fully contains `3-7`, and `6-6` is fully contained by `4-6`. In pairs where one assignment fully contains the other, one Elf in the pair would be exclusively cleaning sections their partner will already be cleaning, so these seem like the most in need of reconsideration. In this example, there are `2` such pairs.
+
+**In how many assignment pairs does one range fully contain the other?**
+
+```elixir
+Helpers.read_file_contents("inputs/Day04.txt")
+|> String.split("\n", trim: true)
+|> Enum.map(&String.split(&1, ",", trim: true))
+|> Enum.map(fn row -> Enum.map(row, &String.split(&1, "-", trim: true)) end)
+|> Enum.map(fn row ->
+  Enum.map(row, fn range -> Enum.map(range, &String.to_integer/1) end)
+end)
+|> Enum.map(fn row ->
+  first = hd(row)
+  second = hd(tl(row))
+  Helpers.in_range?(first, second) or Helpers.in_range?(second, first)
+end)
+|> Enum.filter(&(&1 === true))
+|> Enum.count()
+```
+
+## Part 02
+
+Example:
+
+```
+2-4,6-8
+2-3,4-5
+5-7,7-9
+2-8,3-7
+6-6,4-6
+2-6,4-8
+```
+
+Instead, the Elves would like to know the number of pairs that overlap at all.
+
+In the example, the first two pairs (`2-4,6-8` and `2-3,4-5`) don't overlap
+
+While the remaining four pairs (`5-7,7-9`, `2-8,3-7`, `6-6,4-6`, and `2-6,4-8`) do overlap:
+
+* `5-7,7-9` overlaps in a single section, `7`.
+* `2-8,3-7` overlaps all of the sections `3` through `7`.
+* `6-6,4-6` overlaps in a single section, `6`.
+* `2-6,4-8` overlaps in sections `4`, `5`, and `6`.
+
+So, in this example, the number of overlapping assignment pairs is `4`.
+
+**In how many assignment pairs do the ranges overlap?**
+
+```elixir
+Helpers.read_file_contents("inputs/Day04.txt")
+|> String.split("\n", trim: true)
+|> Enum.map(&String.split(&1, ",", trim: true))
+|> Enum.map(fn row -> Enum.map(row, &String.split(&1, "-", trim: true)) end)
+|> Enum.map(fn row ->
+  Enum.map(row, fn range -> Enum.map(range, &String.to_integer/1) end)
+end)
+|> Enum.map(fn row ->
+  first = hd(row)
+  second = hd(tl(row))
+  Helpers.overlap?(first, second) and Helpers.overlap?(second, first)
+end)
+|> Enum.filter(&(&1 === true))
+|> Enum.count()
+```
