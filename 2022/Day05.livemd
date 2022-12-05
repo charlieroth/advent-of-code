@@ -16,17 +16,102 @@ defmodule Helpers do
 end
 ```
 
+```elixir
+defmodule Stack do
+  defstruct items: []
+  def new, do: %Stack{}
+  def size(%Stack{items: items}), do: length(items)
+  def push(%Stack{items: items}, item), do: %Stack{items: [item | items]}
+  def pop(%Stack{items: [item | rest]}), do: {item, %Stack{items: rest}}
+  def pop(stack = %Stack{items: []}), do: {nil, stack}
+end
+```
+
 ## Part 01
 
+The Elves just need to know **which crate will end up on top of each stack**
 
+In this example, the top crates are `C` in stack `1`, `M` in stack `2`, and `Z` in stack `3`, so you should combine these together and give the Elves the message `CMZ`.
 
 ```elixir
+input = ~S"""
+    [D]    
+[N] [C]    
+[Z] [M] [P]
+ 1   2   3
 
+move 1 from 2 to 1
+move 3 from 1 to 3
+move 2 from 2 to 1
+move 1 from 1 to 2
+"""
+
+[stacks, moves] = input |> String.split("\n\n", trim: true)
+
+# https://elixirforum.com/t/advent-of-code-2022-day-5/52258/2
+
+stacks =
+  stacks
+  |> String.split("\n", trim: true)
+  |> Enum.drop(-1)
+  # list of {character, column}
+  |> Enum.flat_map(fn line ->
+    line
+    |> String.graphemes()
+    |> Enum.drop(1)
+    |> Enum.take_every(4)
+    |> Enum.with_index(1)
+  end)
+  # map(%{ integer() => list({ String.t(), integer() }) })
+  |> Enum.group_by(fn t -> elem(t, 1) end)
+  # list({ integer(), list(String.t()) })
+  |> Enum.map(fn {column, vals} ->
+    val =
+      vals
+      |> Enum.map(&elem(&1, 0))
+      |> Enum.filter(&(&1 !== " "))
+
+    {column, val}
+  end)
+  # map(%{ integer() => list(String.t()) })
+  |> Map.new()
+```
+
+```elixir
+num_cols = length(List.first(rows))
+```
+
+```elixir
+# remove last element
+rows = Enum.take(rows, num_cols)
+```
+
+```elixir
+stacks = for i <- 0..(num_cols - 1), into: %{}, do: {i, %Stack{}}
+```
+
+```elixir
+rows_with_indicies =
+  Enum.map(rows, fn row ->
+    row_with_index = row |> Enum.with_index()
+
+    Enum.into(row_with_index, %{}, fn {item, index} ->
+      if item !== "" do
+        {index, item}
+      else
+        {index, nil}
+      end
+    end)
+  end)
+```
+
+```elixir
+Enum.reduce(rows_with_indicies, stacks, fn row_with_indicies, acc ->
+  acc
+end)
 ```
 
 ## Part 02
-
-
 
 ```elixir
 
