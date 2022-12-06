@@ -54,18 +54,24 @@ stacks =
   stacks
   |> String.split("\n", trim: true)
   |> Enum.drop(-1)
-  # list of {character, column}
+  # list({char(), integer()})
   |> Enum.flat_map(fn line ->
     line
+    # list(char())
     |> String.graphemes()
+    # remove first empty string
     |> Enum.drop(1)
+    # take the 0th and every 4th element
     |> Enum.take_every(4)
+    # tuple {character, index}
     |> Enum.with_index(1)
   end)
-  # map(%{ integer() => list({ String.t(), integer() }) })
-  |> Enum.group_by(fn t -> elem(t, 1) end)
-  # list({ integer(), list(String.t()) })
+  # group by index into map(String.t(), { String.t(), integer() })
+  |> Enum.group_by(&elem(&1, 1))
+  # transform map(String.t(), tuple(String.t(), integer())) into list(tuple(integer(), list(String.t())))
   |> Enum.map(fn {column, vals} ->
+    # take the character from tuple(String.t(), integer())
+    # remove empty ("") characters
     val =
       vals
       |> Enum.map(&elem(&1, 0))
@@ -73,42 +79,53 @@ stacks =
 
     {column, val}
   end)
-  # map(%{ integer() => list(String.t()) })
+  # transform list(tuple(integer(), list(String.t()))) to map(integer(), list(String.t()))
   |> Map.new()
-```
 
-```elixir
-num_cols = length(List.first(rows))
-```
+moves =
+  moves
+  |> String.split("\n", trim: true)
+  |> Enum.map(fn line ->
+    line
+    |> String.split(["move ", " from ", " to "], trim: true)
+    |> Enum.map(&String.to_integer(&1))
+  end)
 
-```elixir
-# remove last element
-rows = Enum.take(rows, num_cols)
-```
+defmodule PartOne do
+  def move([n, from, to], s) do
+    1..n
+    |> Enum.reduce(s, fn _, new_stacks ->
+      case Map.get(new_stacks, from) do
+        nil ->
+          new_stacks
 
-```elixir
-stacks = for i <- 0..(num_cols - 1), into: %{}, do: {i, %Stack{}}
-```
+        [] ->
+          new_stacks
 
-```elixir
-rows_with_indicies =
-  Enum.map(rows, fn row ->
-    row_with_index = row |> Enum.with_index()
+        # pop crate from bottom of "from" stack
+        [crate | from_stack] ->
+          to_stack = Map.get(new_stacks, to)
 
-    Enum.into(row_with_index, %{}, fn {item, index} ->
-      if item !== "" do
-        {index, item}
-      else
-        {index, nil}
+          new_stacks
+          |> Map.put(from, from_stack)
+          |> Map.put(to, [crate | to_stack])
       end
     end)
+  end
+end
+
+final_stack =
+  [[1, 2, 1], [3, 1, 3], [2, 2, 1], [1, 1, 2]]
+  |> Enum.map(fn instruction ->
+    PartOne.move(instruction, stacks)
   end)
+  |> List.last()
 ```
 
 ```elixir
-Enum.reduce(rows_with_indicies, stacks, fn row_with_indicies, acc ->
-  acc
-end)
+m = %{1 => ["N", "Z"]}
+[a | b] = Map.get(m, 1)
+a
 ```
 
 ## Part 02
