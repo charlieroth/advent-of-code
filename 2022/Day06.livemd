@@ -94,3 +94,31 @@ end)
 # Take the first element, this is the marker and it's index
 |> Enum.at(0)
 ```
+
+## Other Solutions
+
+```elixir
+# https://elixirforum.com/t/advent-of-code-2022-day-6/52286/3
+
+Helpers.read_file_contents("inputs/Day06.txt")
+|> String.graphemes()
+|> Enum.chunk_every(4, 1, :discard)
+|> Enum.reduce_while(0, fn marker, pos ->
+  case marker -- Enum.uniq(marker) do
+    [] -> {:halt, pos + 4}
+    _ -> {:cont, pos + 1}
+  end
+end)
+|> IO.puts()
+
+Helpers.read_file_contents("inputs/Day06.txt")
+|> String.graphemes()
+|> Enum.chunk_every(14, 1, :discard)
+|> Enum.reduce_while(0, fn marker, pos ->
+  case marker -- Enum.uniq(marker) do
+    [] -> {:halt, pos + 14}
+    _ -> {:cont, pos + 1}
+  end
+end)
+|> IO.puts()
+```
