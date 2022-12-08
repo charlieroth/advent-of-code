@@ -95,7 +95,7 @@ end
 ```
 
 ```elixir
-input = ~S"""
+output = ~S"""
 $ cd /
 $ ls
 dir a
@@ -121,29 +121,110 @@ $ ls
 7214296 k
 """
 
-# TODO(charlieroth): Trying to build tree of directory names and sizes
-# Need to figure out how to structure the tree (subdirectories)
-
-input
-|> String.split("$", trim: true)
-|> Enum.map(fn line ->
-  line
-  |> String.trim(" ")
-  |> String.split("\n", trim: true)
-end)
-|> Enum.map(fn line ->
-  cond length(line) do
-    1 ->
-      line
-
-    _ ->
-      Enum.map(line, fn el ->
-        case el do
-          "ls" -> el
-        end
-      end)
+defmodule Tokenizer do
+  def scan(lines) do
+    lines |> Enum.map(&scan_line(&1))
   end
-end)
+
+  def scan_line("$ cd " <> path), do: {:cd, path}
+  def scan_line("$ ls"), do: {:ls}
+  def scan_line("dir " <> name), do: {:dir, name}
+
+  def scan_line(<<char, _::binary>> = line) when char in ?1..?9 do
+    [size, name] = String.split(line, " ", parts: 2, trim: true)
+    {:file, name, String.to_integer(size)}
+  end
+
+  def scan_line(_), do: {:garbage}
+end
+
+defmodule Node do
+  defstruct dir?: false, size: 0, children: %{}
+
+  def dir(), do: %__MODULE__{dir?: true}
+  def file(size), do: %__MODULE__{dir?: false, size: size}
+
+  def add(cwd, name, %__MODULE__{dir?: false} = file) do
+    %{cwd | size: cwd.size + file.size, children: Map.put(cwd.children, name, file)}
+  end
+
+  def add(cwd, name, %__MODULE__{dir?: true} = dir) do
+    %{cwd | size: cwd.size + dir.size, children: Map.put(cwd.children, name, dir)}
+  end
+
+  def remove!(%__MODULE__{dir?: true} = cwd, path) do
+    child = Map.fetch!(cwd.children, path)
+    %{cwd | size: cwd.size - child.size, children: Map.delete(cwd.children, child.name)}
+  end
+
+  def remove!(%__MODULE__{dir?: false}, _name) do
+    raise ArgumentError, "File has no children"
+  end
+end
+
+defmodule Shell do
+  def load(node), do: {node, []}
+  def dump({node, _}), do: node
+
+  def cd({%Node{dir?: true} = cwd, [{parent, name} | t]}, "..") do
+    {Node.add(parent, name, cwd), t}
+  end
+
+  def cd({%Node{dir?: true} = cwd, trail}, name) do
+    {%Node{dir?: true} = child, cwd} = Node.remove!(cwd, name)
+    {child, [{cwd, name} | trail]}
+  end
+
+  def add({%Node{dir?: true} = cwd, trail}, name, %Node{} = node) do
+    {Node.add(cwd, name, node), trail}
+  end
+end
+
+defmodule Interpreter do
+  def execute(cmds) do
+    Node.dir()
+    |> Node.add("/", Node.dir())
+    |> Shell.load()
+    |> execute(cmds)
+  end
+
+  def execute(shell, []), do: shell
+
+  def execute(shell, [cmd | rest]) do
+    case cmd do
+      {:file, name, size} ->
+        shell
+        |> Shell.add(name, Node.file(size))
+        |> execute(rest)
+
+      {:dir, name} ->
+        shell
+        |> Shell.add(name, Node.dir())
+        |> execute(rest)
+
+      {:cd, path} ->
+        shell
+        |> Shell.cd(path)
+        |> execute(rest)
+
+      _ ->
+        execute(shell, rest)
+    end
+  end
+end
+
+output
+|> String.split("\n", trim: true)
+|> Tokenizer.scan()
+|> Enum.filter(&Kernel.!=(&1, {:garbage}))
+|> Enum.filter(&Kernel.!=(&1, {:ls}))
+|> Interpreter.execute()
+
+# |> Enum.map(fn line ->
+#   line
+#   |> String.trim(" ")
+#   |> String.split("\n", trim: true)
+# end)
 ```
 
 ## Part 02
@@ -153,3 +234,5 @@ aasdf
 ```elixir
 asdf
 ```
+
+
