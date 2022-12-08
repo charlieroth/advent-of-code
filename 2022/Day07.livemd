@@ -16,6 +16,101 @@ defmodule Helpers do
 end
 ```
 
+```elixir
+defmodule Tree do
+  defstruct dir?: false, size: 0, children: %{}
+
+  def dir(), do: %__MODULE__{dir?: true}
+  def file(size), do: %__MODULE__{dir?: false, size: size}
+
+  def add!(%__MODULE__{dir?: true} = cwd, name, %__MODULE__{} = child) do
+    %{cwd | size: cwd.size + child.size, children: Map.put(cwd.children, name, child)}
+  end
+
+  def add!(%__MODULE__{dir?: false}, _, _) do
+    raise ArgumentError, "Can't add children to a file"
+  end
+
+  def remove!(%__MODULE__{dir?: true} = cwd, path) do
+    child = Map.fetch!(cwd.children, path)
+    {child, %{cwd | size: cwd.size - child.size, children: Map.delete(cwd.children, path)}}
+  end
+
+  def remove!(%__MODULE__{dir?: false}, _name) do
+    raise ArgumentError, "File has no children"
+  end
+end
+```
+
+```elixir
+defmodule Shell do
+  def from_tree(node), do: {node, []}
+
+  def to_tree({node, _}), do: node
+  def to_tree(node), do: node |> cd("..") |> to_tree()
+
+  def cd({%Tree{dir?: true} = cwd, [{parent, name} | t]}, "..") do
+    {Tree.add!(parent, name, cwd), t}
+  end
+
+  def cd({%Tree{dir?: true} = cwd, trail}, name) do
+    {%Tree{dir?: true} = child, cwd} = Tree.remove!(cwd, name)
+    {child, [{cwd, name} | trail]}
+  end
+
+  def add({%Tree{dir?: true} = cwd, trail}, name, %Tree{} = node) do
+    {Tree.add!(cwd, name, node), trail}
+  end
+end
+```
+
+```elixir
+defmodule Parser do
+  def parse(cmds) do
+    Tree.dir()
+    |> Tree.add!("/", Tree.dir())
+    |> Shell.from_tree()
+    |> parse(cmds)
+    |> Shell.to_tree()
+  end
+
+  def parse(shell, []), do: shell
+
+  def parse(shell, [cmd | rest]) do
+    case parse_line(cmd) do
+      {:dir, name} ->
+        shell
+        |> Shell.add(name, Tree.dir())
+        |> parse(rest)
+
+      {:file, name, size} ->
+        shell
+        |> Shell.add(name, Tree.file(size))
+        |> parse(rest)
+
+      {:cd, path} ->
+        shell
+        |> Shell.cd(path)
+        |> parse(rest)
+
+      _ ->
+        parse(shell, rest)
+    end
+  end
+
+  defp parse_line("$ cd " <> path), do: {:cd, path}
+  defp parse_line("$ ls"), do: {:ls}
+  defp parse_line("dir " <> name), do: {:dir, name}
+
+  defp parse_line(<<char, _::binary>> = line) when char in ?1..?9 do
+    [size, name] = String.split(line, " ", parts: 2, trim: true)
+    {:file, name, String.to_integer(size)}
+  end
+
+  defp parse_line(_), do: {:garbage}
+end
+```
+
 ## Part 01
 
 The device the Elves gave you has problems with more than just its communication system. You try to run a system update:
@@ -83,19 +178,35 @@ Find all of the directories with a total size of `at most 100000`
 **What is the sum of the total sizes of those directories?**
 
 ```elixir
-defmodule Tree do
-  defstruct children: []
-
-  @type t :: Tree{children: [t]}
-
-  def insert(tree, dir) do
-    %Tree
+defmodule PartOne do
+  @cap 100_000
+  def solution(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Parser.parse()
+    |> filter([])
   end
+
+  defp filter(%Tree{dir?: true, size: size, children: children}, acc) when size > @cap do
+    children
+    |> Map.values()
+    |> Enum.filter(& &1.dir?)
+    |> Enum.reduce(acc, &filter/2)
+  end
+
+  defp filter(%Tree{dir?: true} = node, acc) do
+    node.children
+    |> Map.values()
+    |> Enum.filter(& &1.dir?)
+    |> Enum.reduce([node | acc], &filter/2)
+  end
+
+  defp filter(%Tree{dir?: false}, acc), do: acc
 end
 ```
 
 ```elixir
-output = ~S"""
+~S"""
 $ cd /
 $ ls
 dir a
@@ -120,111 +231,7 @@ $ ls
 5626152 d.ext
 7214296 k
 """
-
-defmodule Tokenizer do
-  def scan(lines) do
-    lines |> Enum.map(&scan_line(&1))
-  end
-
-  def scan_line("$ cd " <> path), do: {:cd, path}
-  def scan_line("$ ls"), do: {:ls}
-  def scan_line("dir " <> name), do: {:dir, name}
-
-  def scan_line(<<char, _::binary>> = line) when char in ?1..?9 do
-    [size, name] = String.split(line, " ", parts: 2, trim: true)
-    {:file, name, String.to_integer(size)}
-  end
-
-  def scan_line(_), do: {:garbage}
-end
-
-defmodule Node do
-  defstruct dir?: false, size: 0, children: %{}
-
-  def dir(), do: %__MODULE__{dir?: true}
-  def file(size), do: %__MODULE__{dir?: false, size: size}
-
-  def add(cwd, name, %__MODULE__{dir?: false} = file) do
-    %{cwd | size: cwd.size + file.size, children: Map.put(cwd.children, name, file)}
-  end
-
-  def add(cwd, name, %__MODULE__{dir?: true} = dir) do
-    %{cwd | size: cwd.size + dir.size, children: Map.put(cwd.children, name, dir)}
-  end
-
-  def remove!(%__MODULE__{dir?: true} = cwd, path) do
-    child = Map.fetch!(cwd.children, path)
-    %{cwd | size: cwd.size - child.size, children: Map.delete(cwd.children, child.name)}
-  end
-
-  def remove!(%__MODULE__{dir?: false}, _name) do
-    raise ArgumentError, "File has no children"
-  end
-end
-
-defmodule Shell do
-  def load(node), do: {node, []}
-  def dump({node, _}), do: node
-
-  def cd({%Node{dir?: true} = cwd, [{parent, name} | t]}, "..") do
-    {Node.add(parent, name, cwd), t}
-  end
-
-  def cd({%Node{dir?: true} = cwd, trail}, name) do
-    {%Node{dir?: true} = child, cwd} = Node.remove!(cwd, name)
-    {child, [{cwd, name} | trail]}
-  end
-
-  def add({%Node{dir?: true} = cwd, trail}, name, %Node{} = node) do
-    {Node.add(cwd, name, node), trail}
-  end
-end
-
-defmodule Interpreter do
-  def execute(cmds) do
-    Node.dir()
-    |> Node.add("/", Node.dir())
-    |> Shell.load()
-    |> execute(cmds)
-  end
-
-  def execute(shell, []), do: shell
-
-  def execute(shell, [cmd | rest]) do
-    case cmd do
-      {:file, name, size} ->
-        shell
-        |> Shell.add(name, Node.file(size))
-        |> execute(rest)
-
-      {:dir, name} ->
-        shell
-        |> Shell.add(name, Node.dir())
-        |> execute(rest)
-
-      {:cd, path} ->
-        shell
-        |> Shell.cd(path)
-        |> execute(rest)
-
-      _ ->
-        execute(shell, rest)
-    end
-  end
-end
-
-output
-|> String.split("\n", trim: true)
-|> Tokenizer.scan()
-|> Enum.filter(&Kernel.!=(&1, {:garbage}))
-|> Enum.filter(&Kernel.!=(&1, {:ls}))
-|> Interpreter.execute()
-
-# |> Enum.map(fn line ->
-#   line
-#   |> String.trim(" ")
-#   |> String.split("\n", trim: true)
-# end)
+|> PartOne.solution()
 ```
 
 ## Part 02
@@ -232,7 +239,5 @@ output
 aasdf
 
 ```elixir
-asdf
+
 ```
-
-
