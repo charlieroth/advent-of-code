@@ -49,29 +49,179 @@ With `16` trees visible on the edge and another `5` visible in the interior, a t
 **Consider your map; how many trees are visible from outside the grid?**
 
 ```elixir
-input = ~S"""
-30373
-25512
-65332
-33549
-35390
-"""
+defmodule PartOne do
+  def solution(input) do
+    rows = input |> String.split("\n", trim: true)
+    grid = scan(rows)
+    n = length(rows)
+    pos = for x <- 2..(n - 1), y <- 2..(n - 1), do: {x, y}
+    interior_num_visible = find_visible_trees(n, grid, pos)
+    exterior_num_visible = n + (n - 1) * 2 + (n - 2)
+    exterior_num_visible + interior_num_visible
+  end
 
-map =
-  input
-  |> String.split("\n", trim: true)
-  |> Enum.map(&String.split(&1, "", trim: true))
-  |> Enum.map(fn row -> Enum.map(row, &String.to_integer/1) end)
-  |> Enum.with_index()
-  |> Enum.map(fn {row, index} -> {index, Enum.with_index(row, fn el, col -> {col, el} end)} end)
-  |> Enum.map(fn {index, row_els} = _ -> {index, Map.new(row_els)} end)
-  |> Map.new()
+  defp scan(rows) do
+    rows
+    |> Enum.map(&String.split(&1, "", trim: true))
+    |> Enum.map(fn row -> Enum.map(row, &String.to_integer/1) end)
+    |> Enum.with_index(1)
+    |> Enum.map(fn {row, index} ->
+      row
+      |> Enum.with_index(fn el, col -> {col + 1, el} end)
+      |> Map.new()
+      |> (&{index, &1}).()
+    end)
+    |> Map.new()
+  end
+
+  defp find_visible_trees(num_rows, grid, pos) do
+    pos
+    |> Enum.map(&look(num_rows, grid, &1))
+    |> Enum.filter(&(&1 == true))
+    |> Enum.count()
+  end
+
+  defp look(num_rows, grid, {x, y}) do
+    tree = grid |> Map.fetch!(x) |> Map.fetch!(y)
+
+    up =
+      Enum.to_list((x - 1)..1)
+      |> Enum.map(&{&1, y})
+      |> is_visible?(grid, tree)
+
+    down =
+      Enum.to_list((x + 1)..num_rows)
+      |> Enum.map(&{&1, y})
+      |> is_visible?(grid, tree)
+
+    left =
+      Enum.to_list((y - 1)..1)
+      |> Enum.map(&{x, &1})
+      |> is_visible?(grid, tree)
+
+    right =
+      Enum.to_list((y + 1)..num_rows)
+      |> Enum.map(&{x, &1})
+      |> is_visible?(grid, tree)
+
+    up or down or left or right
+  end
+
+  defp is_visible?(path, grid, tree) do
+    Enum.reduce_while(path, true, fn {x, y}, acc ->
+      next_tree = grid |> Map.fetch!(x) |> Map.fetch!(y)
+
+      if tree > next_tree do
+        {:cont, acc}
+      else
+        {:halt, false}
+      end
+    end)
+  end
+end
+```
+
+```elixir
+# ~S"""
+# 30373
+# 25512
+# 65332
+# 33549
+# 35390
+# """
+# |> PartOne.solution()
+
+Helpers.read_file_contents("inputs/Day08.txt")
+|> PartOne.solution()
 ```
 
 ## Part 02
 
-
+https://adventofcode.com/2022/day/8#part2
 
 ```elixir
+defmodule PartTwo do
+  def solution(input) do
+    rows = input |> String.split("\n", trim: true)
+    grid = scan(rows)
+    n = length(rows)
+    pos = for x <- 2..(n - 1), y <- 2..(n - 1), do: {x, y}
+    interior_num_visible = find_visible_trees(n, grid, pos)
+    exterior_num_visible = n + (n - 1) * 2 + (n - 2)
+    exterior_num_visible + interior_num_visible
+  end
 
+  defp scan(rows) do
+    rows
+    |> Enum.map(&String.split(&1, "", trim: true))
+    |> Enum.map(fn row -> Enum.map(row, &String.to_integer/1) end)
+    |> Enum.with_index(1)
+    |> Enum.map(fn {row, index} ->
+      row
+      |> Enum.with_index(fn el, col -> {col + 1, el} end)
+      |> Map.new()
+      |> (&{index, &1}).()
+    end)
+    |> Map.new()
+  end
+
+  defp find_visible_trees(num_rows, grid, pos) do
+    pos
+    |> Enum.map(&look(num_rows, grid, &1))
+    |> Enum.filter(&(&1 == true))
+    |> Enum.count()
+  end
+
+  defp look(num_rows, grid, {x, y}) do
+    tree = grid |> Map.fetch!(x) |> Map.fetch!(y)
+
+    up =
+      Enum.to_list((x - 1)..1)
+      |> Enum.map(&{&1, y})
+      |> is_visible?(grid, tree)
+
+    down =
+      Enum.to_list((x + 1)..num_rows)
+      |> Enum.map(&{&1, y})
+      |> is_visible?(grid, tree)
+
+    left =
+      Enum.to_list((y - 1)..1)
+      |> Enum.map(&{x, &1})
+      |> is_visible?(grid, tree)
+
+    right =
+      Enum.to_list((y + 1)..num_rows)
+      |> Enum.map(&{x, &1})
+      |> is_visible?(grid, tree)
+
+    up or down or left or right
+  end
+
+  defp is_visible?(path, grid, tree) do
+    Enum.reduce_while(path, true, fn {x, y}, acc ->
+      next_tree = grid |> Map.fetch!(x) |> Map.fetch!(y)
+
+      if tree > next_tree do
+        {:cont, acc}
+      else
+        {:halt, false}
+      end
+    end)
+  end
+end
+```
+
+```elixir
+# ~S"""
+# 30373
+# 25512
+# 65332
+# 33549
+# 35390
+# """
+# |> PartTwo.solution()
+
+Helpers.read_file_contents("inputs/Day08.txt")
+|> PartTwo.solution()
 ```
