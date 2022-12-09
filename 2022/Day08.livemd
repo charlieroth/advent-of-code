@@ -122,15 +122,6 @@ end
 ```
 
 ```elixir
-# ~S"""
-# 30373
-# 25512
-# 65332
-# 33549
-# 35390
-# """
-# |> PartOne.solution()
-
 Helpers.read_file_contents("inputs/Day08.txt")
 |> PartOne.solution()
 ```
@@ -139,6 +130,46 @@ Helpers.read_file_contents("inputs/Day08.txt")
 
 https://adventofcode.com/2022/day/8#part2
 
+To measure the viewing distance from a given tree, look up, down, left, and right from that tree; stop if you reach an edge or at the first tree that is the same height or taller than the tree under consideration. (If a tree is right on the edge, at least one of its viewing distances will be zero.)
+
+The Elves don't care about distant trees taller than those found by the rules above; the proposed tree house has large eaves to keep it dry, so they wouldn't be able to see higher than the tree house anyway.
+
+In the example, the middle `5` in the second row:
+
+```
+30373
+25512
+65332
+33549
+35390
+```
+
+* Looking up, its view is not blocked; it can see `1` tree (of height 3).
+* Looking left, its view is blocked immediately; it can see only 1 tree (of height 5, right next to it).
+* Looking right, its view is not blocked; it can see 2 trees.
+* Looking down, its view is blocked eventually; it can see 2 trees (one of height 3, then the tree of height 5 that blocks its view).
+
+A tree's scenic score is found by multiplying together its viewing distance in each of the four directions. For this tree, this is `4 = 1 * 1 * 2 * 2`.
+
+However, you can do even better: consider the tree of height 5 in the middle of the fourth row:
+
+```
+30373
+25512
+65332
+33549
+35390
+```
+
+* Looking up, its view is blocked at 2 trees (by another tree with a height of 5).
+* Looking left, its view is not blocked; it can see 2 trees.
+* Looking down, its view is also not blocked; it can see 1 tree.
+* Looking right, its view is blocked at 2 trees (by a massive tree of height 9).
+
+This tree's scenic score is `8 = 2 * 2 * 1 * 2`; this is the ideal spot for the tree house.
+
+**Consider each tree on your map. What is the highest scenic score possible for any tree?**
+
 ```elixir
 defmodule PartTwo do
   def solution(input) do
@@ -146,9 +177,7 @@ defmodule PartTwo do
     grid = scan(rows)
     n = length(rows)
     pos = for x <- 2..(n - 1), y <- 2..(n - 1), do: {x, y}
-    interior_num_visible = find_visible_trees(n, grid, pos)
-    exterior_num_visible = n + (n - 1) * 2 + (n - 2)
-    exterior_num_visible + interior_num_visible
+    get_scenic_scores(n, grid, pos)
   end
 
   defp scan(rows) do
@@ -165,11 +194,11 @@ defmodule PartTwo do
     |> Map.new()
   end
 
-  defp find_visible_trees(num_rows, grid, pos) do
+  defp get_scenic_scores(num_rows, grid, pos) do
     pos
     |> Enum.map(&look(num_rows, grid, &1))
-    |> Enum.filter(&(&1 == true))
-    |> Enum.count()
+    |> Enum.sort(:desc)
+    |> hd
   end
 
   defp look(num_rows, grid, {x, y}) do
@@ -178,34 +207,33 @@ defmodule PartTwo do
     up =
       Enum.to_list((x - 1)..1)
       |> Enum.map(&{&1, y})
-      |> is_visible?(grid, tree)
+      |> scenic_score(grid, tree)
 
     down =
       Enum.to_list((x + 1)..num_rows)
       |> Enum.map(&{&1, y})
-      |> is_visible?(grid, tree)
+      |> scenic_score(grid, tree)
 
     left =
       Enum.to_list((y - 1)..1)
       |> Enum.map(&{x, &1})
-      |> is_visible?(grid, tree)
+      |> scenic_score(grid, tree)
 
     right =
       Enum.to_list((y + 1)..num_rows)
       |> Enum.map(&{x, &1})
-      |> is_visible?(grid, tree)
+      |> scenic_score(grid, tree)
 
-    up or down or left or right
+    up * down * left * right
   end
 
-  defp is_visible?(path, grid, tree) do
-    Enum.reduce_while(path, true, fn {x, y}, acc ->
+  defp scenic_score(path, grid, tree) do
+    Enum.reduce_while(path, 0, fn {x, y}, acc ->
       next_tree = grid |> Map.fetch!(x) |> Map.fetch!(y)
 
-      if tree > next_tree do
-        {:cont, acc}
-      else
-        {:halt, false}
+      cond do
+        tree > next_tree -> {:cont, acc + 1}
+        tree <= next_tree -> {:halt, acc + 1}
       end
     end)
   end
@@ -213,15 +241,6 @@ end
 ```
 
 ```elixir
-# ~S"""
-# 30373
-# 25512
-# 65332
-# 33549
-# 35390
-# """
-# |> PartTwo.solution()
-
 Helpers.read_file_contents("inputs/Day08.txt")
 |> PartTwo.solution()
 ```
