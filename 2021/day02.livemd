@@ -1,0 +1,87 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Day 02: Dive!
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.9.2"}
+])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## Input
+
+```elixir
+input = Kino.Input.textarea("Input")
+```
+
+## Part 01
+
+```elixir
+{depth, position} =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n", trim: true)
+  |> Enum.map(fn line ->
+    [direction, units] = String.split(line, " ", trim: true)
+    [direction, String.to_integer(units)]
+  end)
+  |> Enum.reduce({0, 0}, fn [direction, units], {depth, position} ->
+    case direction do
+      "forward" ->
+        {depth, position + units}
+
+      "up" ->
+        {depth - units, position}
+
+      "down" ->
+        {depth + units, position}
+    end
+  end)
+
+depth * position
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+2019945
+```
+
+## Part 02
+
+```elixir
+{depth, position, aim} =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n", trim: true)
+  |> Enum.map(fn line ->
+    [direction, units] = String.split(line, " ", trim: true)
+    [direction, String.to_integer(units)]
+  end)
+  |> Enum.reduce({0, 0, 0}, fn [direction, units], {depth, position, aim} ->
+    case direction do
+      "forward" ->
+        {depth + aim * units, position + units, aim}
+
+      "up" ->
+        {depth, position, aim - units}
+
+      "down" ->
+        {depth, position, aim + units}
+    end
+  end)
+
+depth * position
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+1599311480
+```

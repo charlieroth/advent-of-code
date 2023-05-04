@@ -1,0 +1,57 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Day 01: Sonar Sweep
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.9.2"}
+])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## Part 01
+
+```elixir
+input = Kino.Input.textarea("Input")
+```
+
+```elixir
+input
+|> Kino.Input.read()
+|> String.split("\n", trim: true)
+|> Enum.map(&String.to_integer/1)
+|> Enum.chunk_every(2, 1, :discard)
+|> Enum.count(fn [left, right] -> right > left end)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+1228
+```
+
+## Part 02
+
+```elixir
+input
+|> Kino.Input.read()
+|> String.split("\n", trim: true)
+|> Enum.map(&String.to_integer/1)
+# create windows
+|> Enum.chunk_every(3, 1, :discard)
+# create window comparison group
+|> Enum.chunk_every(2, 1, :discard)
+# since the two lists share two elements, compare the non-shared elements to determine which sum is greater
+|> Enum.count(fn [[left, m1, m2], [m1, m2, right]] -> right > left end)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+1257
+```

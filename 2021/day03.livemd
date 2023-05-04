@@ -1,0 +1,122 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Day 03: Binary Diagnostic
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.9.2"}
+])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## Input
+
+```elixir
+input = Kino.Input.textarea("Input")
+```
+
+```elixir
+test_input = Kino.Input.textarea("Test Input")
+```
+
+## Part 01
+
+```elixir
+gamma_fn = fn comp, v -> if comp == 1, do: v + 1, else: v - 1 end
+
+epsilon_fn = fn comp, v -> if comp == 0, do: v + 1, else: v - 1 end
+
+list_to_bin = fn l ->
+  l
+  |> Enum.reverse()
+  |> Enum.with_index(fn bit, index -> {index, bit} end)
+  |> Enum.reduce(0, fn {index, bit}, acc ->
+    if bit == 1, do: acc + :math.pow(2, index), else: acc
+  end)
+end
+
+numbers =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n", trim: true)
+  |> Enum.map(&(&1 |> String.graphemes()))
+  |> Enum.map(&(&1 |> Enum.map(fn b_s -> String.to_integer(b_s) end)))
+
+numbers_len =
+  numbers
+  |> Enum.at(0)
+  |> length()
+  |> (&(&1 - 1)).()
+
+gamma_map =
+  0..numbers_len
+  |> Enum.to_list()
+  |> Enum.with_index(fn el, _i -> {el, 0} end)
+  |> Map.new()
+
+epsilon_map =
+  0..numbers_len
+  |> Enum.to_list()
+  |> Enum.with_index(fn el, _i -> {el, 0} end)
+  |> Map.new()
+
+gamma_rate =
+  numbers
+  |> Enum.reduce(gamma_map, fn gamma, acc ->
+    gamma =
+      Enum.with_index(gamma, fn b, i ->
+        {b, i}
+      end)
+
+    Enum.reduce(gamma, acc, fn {b, i}, acc2 ->
+      Map.update(acc2, i, 0, fn v ->
+        gamma_fn.(b, v)
+      end)
+    end)
+  end)
+  |> Enum.map(fn {_k, count} ->
+    if(count > 0, do: 1, else: 0)
+  end)
+
+epsilon_rate =
+  numbers
+  |> Enum.reduce(epsilon_map, fn epsilon, acc ->
+    epsilon =
+      Enum.with_index(epsilon, fn b, i ->
+        {b, i}
+      end)
+
+    Enum.reduce(epsilon, acc, fn {b, i}, acc2 ->
+      Map.update(acc2, i, 0, fn v ->
+        epsilon_fn.(b, v)
+      end)
+    end)
+  end)
+  |> Enum.map(fn {_k, count} -> if count > 0, do: 1, else: 0 end)
+
+solution = (list_to_bin.(gamma_rate) * list_to_bin.(epsilon_rate)) |> round()
+IO.puts("Power consumption of the submarine: #{solution}")
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+Power consumption of the submarine: 2003336
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## Part 02
+
+```elixir
+
+```
