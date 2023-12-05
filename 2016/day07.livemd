@@ -1,0 +1,156 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Advent of Code 2016 - Day 07
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.11.3"}
+])
+```
+
+## Part 01
+
+While snooping around the local network of EBHQ, you compile a list of IP addresses (they're IPv7, of course; IPv6 is much too limited). You'd like to figure out which IPs support TLS (transport-layer snooping).
+
+An IP supports TLS if it has an Autonomous Bridge Bypass Annotation, or `ABBA`. An `ABBA` is any four-character sequence which consists of a pair of two different characters followed by the reverse of that pair, such as xyyx or abba. However, the IP also must not have an `ABBA` within any hypernet sequences, which are contained by square brackets.
+
+For example:
+
+* `zabba[mnop]qrst` supports TLS (`abba` outside square brackets).
+* `abcd[bddb]xyyx` does not support TLS (`bddb` is within square brackets, even though xyyx is outside square brackets).
+* `aaaa[qwer]tyui` does not support TLS (`aaaa` is invalid; the interior characters must be different).
+* `ioxxoj[asdfgh]zxcvbn` supports TLS (`oxxo` is outside square brackets, even though it's within a larger string).
+
+How many IPs in your puzzle input support TLS?
+
+```elixir
+test_input = Kino.Input.textarea("Paste input here:")
+```
+
+```elixir
+input = Kino.Input.textarea("Paste input here:")
+```
+
+```elixir
+defmodule PartOne do
+  @spec solve(input :: String.t()) :: [bool()]
+  def solve(input) do
+    input
+    |> Kino.Input.read()
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn ip -> split_ip(ip, "", []) end)
+    |> Enum.map(fn ip_parts -> supports_tls?(ip_parts) end)
+  end
+
+  def split_ip(<<>>, curr, parts) do
+    curr
+    |> IO.iodata_to_binary()
+    |> then(fn curr -> [curr | parts] end)
+    |> Enum.reverse()
+  end
+
+  def split_ip(<<"[", rest::binary>>, curr, parts) do
+    {part, [_rbrace | rest]} =
+      Enum.split_while(
+        String.split(rest, "", trim: true),
+        &(!is_rbrace?(&1))
+      )
+
+    part = Enum.join(part, "")
+    rest = IO.iodata_to_binary(rest)
+    curr = IO.iodata_to_binary(curr)
+    parts = [curr | parts]
+    parts = [[part] | parts]
+    split_ip(rest, <<>>, parts)
+  end
+
+  def split_ip(<<ch::utf8, rest::binary>>, curr, parts) do
+    split_ip(rest, [curr | <<ch>>], parts)
+  end
+
+  def supports_tls?(ip_parts) when is_list(ip_parts) do
+    ip_parts
+    |> Enum.map(fn ip_part ->
+      case is_list(ip_part) do
+        true -> ip_part |> hd() |> eval_part(:inside_brackets)
+        false -> ip_part |> eval_part(:outside_brackets)
+      end
+    end)
+    |> Enum.reduce_while(
+      false,
+      fn
+        {:inside_brackets, true}, _acc -> {:halt, false}
+        {:inside_brackets, false}, acc -> {:cont, acc}
+        {:outside_brackets, result}, acc -> {:cont, acc or result}
+      end
+    )
+  end
+
+  def eval_part(_ip_part, :inside_brackets) do
+    {:inside_brackets, false}
+  end
+
+  def eval_part(ip_part, :outside_brackets) do
+    ip_part
+    |> String.split("", trim: true)
+    |> Enum.chunk_every(4, 1, :discard)
+    |> Enum.reject(fn chars ->
+      [a, b, c, d] = chars
+      all_same_characters = a != b and a != c and a != d
+      is_abba_notation = a == d and b == c
+      all_same_characters or !is_abba_notation
+    end)
+    |> then(fn l -> {:outside_brackets, !Enum.empty?(l)} end)
+  end
+
+  defp is_rbrace?(ch), do: ch == <<"]">>
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, PartOne, <<70, 79, 82, 49, 0, 0, 23, ...>>, {:is_rbrace?, 1}}
+```
+
+```elixir
+PartOne.supports_tls?([
+  "zabba",
+  ["mnop"],
+  "qrst"
+])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+true
+```
+
+```elixir
+PartOne.supports_tls?([
+  "wysextplwqpvipxdv",
+  ["srzvtwbfzqtspxnethm"],
+  "syqbzgtboxxzpwr",
+  ["kljvjjkjyojzrstfgrw"],
+  "obdhcczonzvbfby",
+  ["svotajtpttohxsh"],
+  "cooktbyumlpxostt"
+])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+false
+```
+
+```elixir
+PartOne.solve(test_input)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+[true, true, true, true]
+```
