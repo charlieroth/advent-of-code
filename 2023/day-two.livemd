@@ -8,6 +8,12 @@ Mix.install([
 ])
 ```
 
+## Puzzle
+
+https://adventofcode.com/2023/day/2
+
+https://adventofcode.com/2023/day/2/input
+
 ## Part 01
 
 ```elixir
@@ -22,31 +28,77 @@ end
 ```
 
 ```elixir
+test_input = Kino.Input.textarea("Paste input here:")
+```
+
+```elixir
 input = Kino.Input.textarea("Paste input here:")
 ```
+
+Which games would have been possible if the bag contained only 12 red cubes, 13 green cubes, and 14 blue cubes?
+
+In example, games 1, 2 and 5 would have been __possible__. Game 3 would have been __impossible__ because at one point the Elf showed you 20 red cubes at once; Game 4 would have been __impossible__ because the Elf showed 15 blue cubes at once
+
+Determine which games would have been possible if the bag had been loaded with only 12 red cubes, 13 green cubes, and 14 blue cubes. __What is the sum of the IDs of those games?__
 
 ```elixir
 input
 |> Kino.Input.read()
+|> String.split("\n", trim: true)
+|> Enum.map(fn game ->
+  String.split(game, ["Game ", ": ", "; "], trim: true)
+end)
+|> Enum.into(%{}, fn game ->
+  [id | sets_of_cubes] = game
+  {id_num, _} = Integer.parse(id)
+
+  sets_of_cubes =
+    Enum.map(sets_of_cubes, fn set_of_cubes ->
+      set_of_cubes
+      |> String.split(", ", trim: true)
+      |> Enum.map(fn cubes ->
+        [amount_str, color_str] = String.split(cubes, " ", parts: 2, trim: true)
+        {amount, _} = Integer.parse(amount_str)
+
+        case color_str do
+          "blue" -> {amount, :blue}
+          "green" -> {amount, :green}
+          "red" -> {amount, :red}
+        end
+      end)
+    end)
+
+  {id_num, sets_of_cubes}
+end)
+|> Enum.map(fn {id, sets_of_cubes} ->
+  valid? =
+    Enum.reduce(sets_of_cubes, true, fn set_of_cubes, acc ->
+      contains_invalid_amount =
+        Enum.any?(set_of_cubes, fn {amount, color} ->
+          (color == :red and amount > 12) or (color == :green and amount > 13) or
+            (color == :blue and amount > 14)
+        end)
+
+      if contains_invalid_amount, do: false, else: acc
+    end)
+
+  {id, valid?}
+end)
+|> Enum.filter(fn {_id, result} -> result end)
+|> Enum.map(fn {id, _} -> id end)
+|> Enum.sum()
 ```
 
 <!-- livebook:{"output":true} -->
 
 ```
-""
+2528
 ```
 
 ## Part 02
 
 ```elixir
-defmodule PartTwo do
-end
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-{:module, PartTwo, <<70, 79, 82, 49, 0, 0, 4, ...>>, nil}
+test_input = Kino.Input.textarea("Paste input here:")
 ```
 
 ```elixir
@@ -56,10 +108,58 @@ input = Kino.Input.textarea("Paste input here:")
 ```elixir
 input
 |> Kino.Input.read()
+|> String.split("\n", trim: true)
+|> Enum.map(fn game ->
+  String.split(game, ["Game ", ": ", "; "], trim: true)
+end)
+|> Enum.into(%{}, fn game ->
+  [id | sets_of_cubes] = game
+  {id_num, _} = Integer.parse(id)
+
+  sets_of_cubes =
+    Enum.flat_map(sets_of_cubes, fn set_of_cubes ->
+      set_of_cubes
+      |> String.split(", ", trim: true)
+      |> Enum.map(fn cubes ->
+        [amount_str, color_str] = String.split(cubes, " ", parts: 2, trim: true)
+        {amount, _} = Integer.parse(amount_str)
+
+        case color_str do
+          "blue" -> {amount, :blue}
+          "green" -> {amount, :green}
+          "red" -> {amount, :red}
+        end
+      end)
+    end)
+
+  {id_num, sets_of_cubes}
+end)
+|> Enum.into(%{}, fn {id, cubes} ->
+  {id,
+   Enum.reduce(cubes, %{}, fn {amount, color}, acc ->
+     if Map.has_key?(acc, color) do
+       highest_amount_for_color = Map.fetch!(acc, color)
+
+       if amount > highest_amount_for_color do
+         Map.put(acc, color, amount)
+       else
+         acc
+       end
+     else
+       Map.put(acc, color, amount)
+     end
+   end)}
+end)
+|> Enum.map(fn {_id, color_amount_map} ->
+  Enum.reduce(color_amount_map, 1, fn {_color, amount}, acc ->
+    amount * acc
+  end)
+end)
+|> Enum.sum()
 ```
 
 <!-- livebook:{"output":true} -->
 
 ```
-""
+67363
 ```
