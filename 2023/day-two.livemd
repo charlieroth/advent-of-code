@@ -1,0 +1,65 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# AOC 2023 - Day 02
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.11.3"}
+])
+```
+
+## Part 01
+
+```elixir
+defmodule PartOne do
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, PartOne, <<70, 79, 82, 49, 0, 0, 4, ...>>, nil}
+```
+
+```elixir
+input = Kino.Input.textarea("Paste input here:")
+```
+
+```elixir
+input
+|> Kino.Input.read()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+""
+```
+
+## Part 02
+
+```elixir
+defmodule PartTwo do
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, PartTwo, <<70, 79, 82, 49, 0, 0, 4, ...>>, nil}
+```
+
+```elixir
+input = Kino.Input.textarea("Paste input here:")
+```
+
+```elixir
+input
+|> Kino.Input.read()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+""
+```

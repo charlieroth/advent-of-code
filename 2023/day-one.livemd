@@ -1,0 +1,117 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# AOC 2023 - Day 01
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.11.3"}
+])
+```
+
+## Part 01
+
+```elixir
+defmodule PartOne do
+  def find_numbers(<<>>, nums), do: Enum.reverse(nums)
+
+  def find_numbers(<<ch, rest::binary>>, nums) when ch in ?0..?9 do
+    num = ch - ?0
+    find_numbers(rest, [num | nums])
+  end
+
+  def find_numbers(<<_ch::utf8, rest::binary>>, nums), do: find_numbers(rest, nums)
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, PartOne, <<70, 79, 82, 49, 0, 0, 8, ...>>, {:find_numbers, 2}}
+```
+
+```elixir
+input = Kino.Input.textarea("Paste input here:")
+```
+
+```elixir
+input
+|> Kino.Input.read()
+|> String.split("\n", trim: true)
+|> Enum.map(&PartOne.find_numbers(&1, []))
+|> Enum.map(fn nums ->
+  if(
+    length(nums) == 1,
+    do: [List.first(nums), List.first(nums)],
+    else: [List.first(nums), List.last(nums)]
+  )
+  |> Enum.join()
+  |> Integer.parse()
+  |> elem(0)
+end)
+|> Enum.sum()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+54390
+```
+
+## Part 02
+
+```elixir
+defmodule PartTwo do
+  def find_numbers(<<>>, nums), do: Enum.reverse(nums)
+
+  def find_numbers(<<"one", rest::binary>>, nums), do: find_numbers("e" <> rest, [1 | nums])
+  def find_numbers(<<"two", rest::binary>>, nums), do: find_numbers("o" <> rest, [2 | nums])
+  def find_numbers(<<"three", rest::binary>>, nums), do: find_numbers("e" <> rest, [3 | nums])
+  def find_numbers(<<"four", rest::binary>>, nums), do: find_numbers(rest, [4 | nums])
+  def find_numbers(<<"five", rest::binary>>, nums), do: find_numbers("e" <> rest, [5 | nums])
+  def find_numbers(<<"six", rest::binary>>, nums), do: find_numbers(rest, [6 | nums])
+  def find_numbers(<<"seven", rest::binary>>, nums), do: find_numbers("n" <> rest, [7 | nums])
+  def find_numbers(<<"eight", rest::binary>>, nums), do: find_numbers("t" <> rest, [8 | nums])
+  def find_numbers(<<"nine", rest::binary>>, nums), do: find_numbers("e" <> rest, [9 | nums])
+
+  def find_numbers(<<ch, rest::binary>>, nums) when ch in ?0..?9 do
+    num = ch - ?0
+    find_numbers(rest, [num | nums])
+  end
+
+  def find_numbers(<<_ch, rest::binary>>, nums), do: find_numbers(rest, nums)
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, PartTwo, <<70, 79, 82, 49, 0, 0, 12, ...>>, {:find_numbers, 2}}
+```
+
+```elixir
+input = Kino.Input.textarea("Paste input here:")
+```
+
+```elixir
+input
+|> Kino.Input.read()
+|> String.split("\n")
+|> Enum.map(fn line -> PartTwo.find_numbers(line, []) end)
+|> Enum.map(fn nums ->
+  if(
+    length(nums) == 1,
+    do: [List.first(nums), List.first(nums)],
+    else: [List.first(nums), List.last(nums)]
+  )
+  |> Enum.join()
+  |> Integer.parse()
+  |> elem(0)
+end)
+|> Enum.sum()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+54277
+```
