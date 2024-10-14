@@ -1,0 +1,41 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# 2024: Day 20
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.14.1"}
+])
+```
+
+## Part One
+
+```elixir
+part_one_textarea = Kino.Input.textarea("Part One Input")
+```
+
+```elixir
+part_one_input = Kino.Input.read(part_one_textarea)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+""
+```
+
+## Part Two
+
+```elixir
+part_two_textarea = Kino.Input.textarea("Part Two Input")
+```
+
+```elixir
+part_two_input = Kino.Input.read(part_two_textarea)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+""
+```
